@@ -82,6 +82,9 @@ PACKAGES=(
     "libxinerama"
     "libxrender"
     "ttf-jetbrains-mono-nerd"
+    "xclip"
+    "xwallpaper"
+    "curl"
 )
 
 MISSING_PACKAGES=()
@@ -115,6 +118,28 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     else
         print_success "picom already installed"
     fi
+fi
+
+# ============================================
+# STEP 1.5: Download default wallpaper
+# ============================================
+echo ""
+print_status "Setting up default wallpaper..."
+WALLPAPER_DIR="$HOME/.local/share/wallpapers"
+WALLPAPER_FILE="$WALLPAPER_DIR/default.jpg"
+WALLPAPER_URL="https://w.wallhaven.cc/full/z8/wallhaven-z87z1j.jpg"
+
+mkdir -p "$WALLPAPER_DIR"
+
+if [[ ! -f "$WALLPAPER_FILE" ]]; then
+    print_status "Downloading wallpaper..."
+    if curl -L -o "$WALLPAPER_FILE" "$WALLPAPER_URL" 2>/dev/null; then
+        print_success "Wallpaper downloaded to $WALLPAPER_FILE"
+    else
+        print_warning "Failed to download wallpaper. You can set one manually later."
+    fi
+else
+    print_success "Wallpaper already exists at $WALLPAPER_FILE"
 fi
 
 # ============================================

@@ -11,7 +11,9 @@ A minimal suckless desktop environment with **Tokyo Night** theme for **Arch Lin
 - 📝 **Layout indicators**: `[T]` tiled, `[F]` floating, `[M]` monocle
 - 🔤 **JetBrains Mono Nerd Font**
 - 🔍 **Fuzzy search** in dmenu
-- 🖥️ **Transparent** bar and terminal (~90% opacity)
+- 🖥️ **Transparent** bar and terminal (95% opacity)
+- 📋 **xclip** clipboard support
+- 🖼️ **xwallpaper** with default Tokyo Night wallpaper
 - 🔒 **slock** screen locker
 
 ## Project Structure
@@ -60,7 +62,10 @@ sudo pacman -S --needed \
     libxft \
     libxinerama \
     libxrender \
-    ttf-jetbrains-mono-nerd
+    ttf-jetbrains-mono-nerd \
+    xclip \
+    xwallpaper \
+    curl
 ```
 
 | Package | Purpose |
@@ -74,6 +79,9 @@ sudo pacman -S --needed \
 | `libxinerama` | Multi-monitor support |
 | `libxrender` | X Render extension |
 | `ttf-jetbrains-mono-nerd` | Nerd Font with icons |
+| `xclip` | Clipboard support |
+| `xwallpaper` | Wallpaper setter |
+| `curl` | Download wallpaper |
 
 #### 2. Optional: Compositor for Transparency
 

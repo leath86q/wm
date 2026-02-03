@@ -11,7 +11,7 @@
  * is to have dmenu appear on top of the bar when using said patch in dwm.
  * 
  */
-#define BARPADDING_PATCH 0
+#define BARPADDING_PATCH 1
 
 /* This patch adds proper support for Right-To-Left (RTL) languages, such as Hebrew,
  * Arabic, and Farsi.
