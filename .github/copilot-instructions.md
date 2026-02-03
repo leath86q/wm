@@ -7,25 +7,27 @@ Suckless window manager setup with **Tokyo Night** theme for **Arch Linux**.
 ## Architecture
 
 ```
-dwm/
-├── dwm-flexipatch/    # Window manager
-│   ├── patches.h      # Enabled patches (copied from patches.def.h, then modified)
-│   ├── config.h       # Theme, keybinds, rules (copied from config.def.h, then modified)
-│   └── config.mk      # Build config (XRENDER enabled for alpha)
-├── dmenu-flexipatch/  # Launcher
-│   ├── patches.h      # Enabled patches
-│   ├── config.h       # Centered, fuzzy search
-│   └── config.mk      # Build config (XRENDER enabled)
-├── st-flexipatch/     # Terminal
-│   ├── patches.h      # Enabled patches (ALPHA, ANYSIZE, SCROLLBACK, etc.)
-│   └── config.h       # Tokyo Night colors, 95% opacity
-├── slstatus/          # Status bar
-│   └── config.h       # CPU, RAM, disk, date, time
-├── slock/             # Screen locker
-│   └── config.h       # Lock colors
+dwm/                       # Main folder (clone this repo as 'dwm')
+├── install.sh             # Automated installer
+├── README.md              # Documentation
+├── dwm-flexipatch/        # Window manager
+│   ├── patches.h          # Enabled patches (copied from patches.def.h, then modified)
+│   ├── config.h           # Theme, keybinds, rules (copied from config.def.h, then modified)
+│   └── config.mk          # Build config (XRENDER enabled for alpha)
+├── dmenu-flexipatch/      # Launcher
+│   ├── patches.h          # Enabled patches
+│   ├── config.h           # Centered, fuzzy search
+│   └── config.mk          # Build config (XRENDER enabled)
+├── st-flexipatch/         # Terminal
+│   ├── patches.h          # Enabled patches (ALPHA, ANYSIZE, SCROLLBACK, etc.)
+│   ├── config.h           # Tokyo Night colors, 95% opacity
+│   └── config.mk          # Build config (XRENDER enabled for alpha)
+├── slstatus/              # Status bar
+│   └── config.h           # CPU, RAM, disk, date, time
+├── slock/                 # Screen locker
+│   └── config.h           # Lock colors
 └── scripts/
-    └── autostart.sh   # Starts slstatus
-install.sh             # Automated installer
+    └── autostart.sh       # Starts slstatus
 ```
 
 ## Enabled Patches
@@ -78,13 +80,13 @@ install.sh             # Automated installer
 ## Build Commands (Arch)
 
 ```bash
-# Quick install
+# Quick install (run from dwm folder)
 ./install.sh
 
 # Manual build
 sudo pacman -S --needed base-devel git xorg-server xorg-xinit libx11 libxft libxinerama libxrender ttf-jetbrains-mono-nerd
 
-cd dwm/dwm-flexipatch && sudo make clean install
+cd dwm-flexipatch && sudo make clean install
 cd ../dmenu-flexipatch && sudo make clean install
 cd ../st-flexipatch && sudo make clean install
 cd ../slstatus && sudo make clean install
@@ -98,5 +100,6 @@ cd ../slock && sudo make clean install
 | `Mod+Return` | Terminal (st) |
 | `Mod+p` | dmenu |
 | `Mod+Shift+c` | Close window |
+| `Mod+Ctrl+l` | Lock screen (slock) |
 | `Mod+t/f/m` | Tiled/Floating/Monocle |
 | `Mod+Shift+q` | Quit dwm |

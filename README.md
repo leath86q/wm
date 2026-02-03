@@ -1,4 +1,4 @@
-# WM - Suckless Window Manager Setup
+# DWM - Suckless Window Manager Setup
 
 A minimal suckless desktop environment with **Tokyo Night** theme for **Arch Linux**.
 
@@ -17,14 +17,16 @@ A minimal suckless desktop environment with **Tokyo Night** theme for **Arch Lin
 ## Project Structure
 
 ```
-dwm/
-├── dwm-flexipatch/    # Window manager
-├── dmenu-flexipatch/  # Application launcher
-├── st-flexipatch/     # Terminal emulator
-├── slstatus/          # Status bar
-├── slock/             # Screen locker
+dwm/                       # Clone this repo as 'dwm'
+├── install.sh             # Automated installer
+├── README.md              # This file
+├── dwm-flexipatch/        # Window manager
+├── dmenu-flexipatch/      # Application launcher
+├── st-flexipatch/         # Terminal emulator
+├── slstatus/              # Status bar
+├── slock/                 # Screen locker
 └── scripts/
-    └── autostart.sh   # Startup script
+    └── autostart.sh       # Startup script
 ```
 
 ## Installation (Minimal Arch Linux)
@@ -32,8 +34,8 @@ dwm/
 ### Quick Install
 
 ```bash
-git clone https://github.com/leath86q/wm.git
-cd wm
+git clone https://github.com/leath86q/wm.git dwm
+cd dwm
 chmod +x install.sh
 ./install.sh
 ```
@@ -45,8 +47,6 @@ The install script will:
 - Optionally set up auto-startx on login
 
 ### Manual Install
-
-#### Manual Install
 
 #### 1. Install Prerequisites
 
@@ -84,14 +84,14 @@ sudo pacman -S picom
 #### 3. Clone Repository
 
 ```bash
-git clone https://github.com/leath86q/wm.git
-cd wm
+git clone https://github.com/leath86q/wm.git dwm
+cd dwm
 ```
 
 #### 4. Build & Install
 
 ```bash
-cd dwm/dwm-flexipatch && sudo make clean install
+cd dwm-flexipatch && sudo make clean install
 cd ../dmenu-flexipatch && sudo make clean install
 cd ../st-flexipatch && sudo make clean install
 cd ../slstatus && sudo make clean install
@@ -102,11 +102,11 @@ cd ../slock && sudo make clean install
 
 ```bash
 mkdir -p ~/.local/share/dwm
-cp dwm/scripts/autostart.sh ~/.local/share/dwm/
+cp scripts/autostart.sh ~/.local/share/dwm/
 chmod +x ~/.local/share/dwm/autostart.sh
 ```
 
-##### 6. Configure Xinit
+#### 6. Configure Xinit
 
 Create `~/.xinitrc`:
 ```bash
@@ -158,7 +158,7 @@ startx
 |-----|--------|
 | `Mod+Alt+0` | Toggle gaps |
 | `Mod+Alt+Shift+0` | Reset gaps |
-| `Mod+Alt+=/-` | Inc/dec gaps |
+| `Mod+Alt+u/U` | Inc/dec all gaps |
 
 ### Tags
 
@@ -188,12 +188,12 @@ startx
 
 | File | Purpose |
 |------|---------|
-| `dwm/dwm-flexipatch/config.h` | Keybindings, rules, appearance |
-| `dwm/dwm-flexipatch/patches.h` | Enable/disable patches |
-| `dwm/dmenu-flexipatch/config.h` | Launcher settings |
-| `dwm/st-flexipatch/config.h` | Terminal settings |
-| `dwm/slstatus/config.h` | Status bar segments |
-| `dwm/slock/config.h` | Lock colors |
+| `dwm-flexipatch/config.h` | Keybindings, rules, appearance |
+| `dwm-flexipatch/patches.h` | Enable/disable patches |
+| `dmenu-flexipatch/config.h` | Launcher settings |
+| `st-flexipatch/config.h` | Terminal settings |
+| `slstatus/config.h` | Status bar segments |
+| `slock/config.h` | Lock colors |
 
 Rebuild after changes:
 ```bash

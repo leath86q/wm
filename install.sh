@@ -4,7 +4,8 @@
 # Installs dwm, dmenu, st, slstatus, slock with Tokyo Night theme
 #
 
-set -e
+# Don't exit on error - we handle errors ourselves
+set +e
 
 # Colors for output
 RED='\033[0;31m'
@@ -30,14 +31,34 @@ if [[ ! -f /etc/arch-release ]]; then
     exit 1
 fi
 
-# Get script directory
+# Get script directory (install.sh is now in the main dwm folder)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DWM_DIR="$SCRIPT_DIR/dwm"
 
-if [[ ! -d "$DWM_DIR" ]]; then
-    print_error "dwm directory not found at $DWM_DIR"
+# Components to build (relative to SCRIPT_DIR)
+declare -A COMPONENTS=(
+    ["dwm"]="dwm-flexipatch"
+    ["dmenu"]="dmenu-flexipatch"
+    ["st"]="st-flexipatch"
+    ["slstatus"]="slstatus"
+    ["slock"]="slock"
+)
+
+# Verify all component directories exist
+print_status "Verifying component directories..."
+MISSING_DIRS=0
+for name in "${!COMPONENTS[@]}"; do
+    dir="${COMPONENTS[$name]}"
+    if [[ ! -d "$SCRIPT_DIR/$dir" ]]; then
+        print_error "Component directory not found: $SCRIPT_DIR/$dir"
+        MISSING_DIRS=1
+    fi
+done
+
+if [[ $MISSING_DIRS -eq 1 ]]; then
+    print_error "Some component directories are missing. Please check your installation."
     exit 1
 fi
+print_success "All component directories found"
 
 echo ""
 echo "╔═══════════════════════════════════════════════════════════╗"
@@ -74,7 +95,10 @@ done
 if [[ ${#MISSING_PACKAGES[@]} -gt 0 ]]; then
     print_warning "Missing packages: ${MISSING_PACKAGES[*]}"
     print_status "Installing missing packages..."
-    sudo pacman -S --needed --noconfirm "${MISSING_PACKAGES[@]}"
+    if ! sudo pacman -S --needed --noconfirm "${MISSING_PACKAGES[@]}"; then
+        print_error "Failed to install dependencies"
+        exit 1
+    fi
     print_success "Dependencies installed"
 else
     print_success "All dependencies already installed"
@@ -102,23 +126,89 @@ print_status "Building and installing DWM stack..."
 build_component() {
     local name=$1
     local dir=$2
+    local logfile="/tmp/build_${name}.log"
     
-    if [[ -d "$dir" ]]; then
-        print_status "Building $name..."
-        cd "$dir"
-        sudo make clean install >/dev/null 2>&1
-        print_success "$name installed"
-    else
+    if [[ ! -d "$dir" ]]; then
         print_error "$name directory not found: $dir"
         return 1
     fi
+    
+    print_status "Building $name..."
+    cd "$dir"
+    
+    # Clean first (ignore errors)
+    make clean > "$logfile" 2>&1 || true
+    
+    # Build
+    if ! make >> "$logfile" 2>&1; then
+        print_error "Failed to build $name"
+        echo ""
+        echo "--- Build log ($logfile) ---"
+        tail -30 "$logfile"
+        echo "--- End of build log ---"
+        echo ""
+        return 1
+    fi
+    
+    # Install with sudo
+    if ! sudo make install >> "$logfile" 2>&1; then
+        print_error "Failed to install $name"
+        echo ""
+        echo "--- Build log ($logfile) ---"
+        tail -30 "$logfile"
+        echo "--- End of build log ---"
+        echo ""
+        return 1
+    fi
+    
+    print_success "$name installed successfully"
+    rm -f "$logfile"
+    return 0
 }
 
-build_component "dwm" "$DWM_DIR/dwm-flexipatch"
-build_component "dmenu" "$DWM_DIR/dmenu-flexipatch"
-build_component "st" "$DWM_DIR/st-flexipatch"
-build_component "slstatus" "$DWM_DIR/slstatus"
-build_component "slock" "$DWM_DIR/slock"
+# Track build results
+FAILED_COMPONENTS=()
+SUCCESSFUL_COMPONENTS=()
+
+# Build in specific order: dwm, dmenu, st, slstatus, slock
+BUILD_ORDER=("dwm" "dmenu" "st" "slstatus" "slock")
+
+for name in "${BUILD_ORDER[@]}"; do
+    dir="${COMPONENTS[$name]}"
+    if build_component "$name" "$SCRIPT_DIR/$dir"; then
+        SUCCESSFUL_COMPONENTS+=("$name")
+    else
+        FAILED_COMPONENTS+=("$name")
+    fi
+done
+
+echo ""
+# Report results
+if [[ ${#SUCCESSFUL_COMPONENTS[@]} -gt 0 ]]; then
+    print_success "Successfully installed: ${SUCCESSFUL_COMPONENTS[*]}"
+fi
+
+if [[ ${#FAILED_COMPONENTS[@]} -gt 0 ]]; then
+    print_error "Failed to install: ${FAILED_COMPONENTS[*]}"
+    print_warning "Check the build logs above for details."
+    print_warning "You can try building manually: cd <component> && sudo make clean install"
+fi
+
+# Verify binaries exist
+echo ""
+print_status "Verifying installation..."
+for cmd in dwm dmenu st slstatus slock; do
+    if command -v "$cmd" &>/dev/null; then
+        print_success "$cmd installed at $(command -v $cmd)"
+    else
+        # Check common install location
+        if [[ -x "/usr/local/bin/$cmd" ]]; then
+            print_success "$cmd installed at /usr/local/bin/$cmd"
+        else
+            print_warning "$cmd not found in PATH"
+        fi
+    fi
+done
 
 # ============================================
 # STEP 3: Setup autostart script
@@ -127,9 +217,13 @@ echo ""
 print_status "Setting up autostart..."
 
 mkdir -p ~/.local/share/dwm
-cp "$DWM_DIR/scripts/autostart.sh" ~/.local/share/dwm/
-chmod +x ~/.local/share/dwm/autostart.sh
-print_success "Autostart script installed to ~/.local/share/dwm/"
+if [[ -f "$SCRIPT_DIR/scripts/autostart.sh" ]]; then
+    cp "$SCRIPT_DIR/scripts/autostart.sh" ~/.local/share/dwm/
+    chmod +x ~/.local/share/dwm/autostart.sh
+    print_success "Autostart script installed to ~/.local/share/dwm/"
+else
+    print_warning "autostart.sh not found at $SCRIPT_DIR/scripts/autostart.sh"
+fi
 
 # ============================================
 # STEP 4: Configure .xinitrc
