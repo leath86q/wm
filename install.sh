@@ -77,6 +77,7 @@ PACKAGES=(
     "base-devel"
     "xorg-server"
     "xorg-xinit"
+    "xorg-xrandr"
     "libx11"
     "libxft"
     "libxinerama"
@@ -84,6 +85,7 @@ PACKAGES=(
     "ttf-jetbrains-mono-nerd"
     "xclip"
     "xwallpaper"
+    "imagemagick"
     "curl"
 )
 
@@ -153,25 +155,37 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
 fi
 
 # ============================================
-# STEP 1.5: Download default wallpaper
+# STEP 1.5: Generate keybinds wallpaper
 # ============================================
 echo ""
-print_status "Setting up default wallpaper..."
+print_status "Generating keybinds wallpaper..."
 WALLPAPER_DIR="$HOME/.local/share/wallpapers"
-WALLPAPER_FILE="$WALLPAPER_DIR/default.jpg"
+KEYBINDS_WALLPAPER="$WALLPAPER_DIR/keybinds.png"
+FALLBACK_WALLPAPER="$WALLPAPER_DIR/default.jpg"
 WALLPAPER_URL="https://w.wallhaven.cc/full/z8/wallhaven-z87z1j.jpg"
 
 mkdir -p "$WALLPAPER_DIR"
 
-if [[ ! -f "$WALLPAPER_FILE" ]]; then
-    print_status "Downloading wallpaper..."
-    if curl -L -o "$WALLPAPER_FILE" "$WALLPAPER_URL" 2>/dev/null; then
-        print_success "Wallpaper downloaded to $WALLPAPER_FILE"
+# Generate keybinds wallpaper using the script
+if [[ -f "$SCRIPT_DIR/scripts/generate-keybinds-wallpaper.sh" ]]; then
+    chmod +x "$SCRIPT_DIR/scripts/generate-keybinds-wallpaper.sh"
+    if bash "$SCRIPT_DIR/scripts/generate-keybinds-wallpaper.sh" 2>/dev/null; then
+        print_success "Keybinds wallpaper generated at $KEYBINDS_WALLPAPER"
     else
-        print_warning "Failed to download wallpaper. You can set one manually later."
+        print_warning "Failed to generate keybinds wallpaper (ImageMagick may have issues)"
     fi
 else
-    print_success "Wallpaper already exists at $WALLPAPER_FILE"
+    print_warning "Keybinds wallpaper script not found"
+fi
+
+# Download fallback wallpaper
+if [[ ! -f "$FALLBACK_WALLPAPER" ]]; then
+    print_status "Downloading fallback wallpaper..."
+    if curl -L -o "$FALLBACK_WALLPAPER" "$WALLPAPER_URL" 2>/dev/null; then
+        print_success "Fallback wallpaper downloaded to $FALLBACK_WALLPAPER"
+    else
+        print_warning "Failed to download fallback wallpaper."
+    fi
 fi
 
 # ============================================
@@ -271,10 +285,10 @@ for cmd in dwm dmenu st slstatus slock; do
 done
 
 # ============================================
-# STEP 3: Setup autostart script
+# STEP 3: Setup autostart and utility scripts
 # ============================================
 echo ""
-print_status "Setting up autostart..."
+print_status "Setting up autostart and utility scripts..."
 
 mkdir -p ~/.local/share/dwm
 if [[ -f "$SCRIPT_DIR/scripts/autostart.sh" ]]; then
@@ -285,17 +299,94 @@ else
     print_warning "autostart.sh not found at $SCRIPT_DIR/scripts/autostart.sh"
 fi
 
+# Copy wallpaper generator script
+if [[ -f "$SCRIPT_DIR/scripts/generate-keybinds-wallpaper.sh" ]]; then
+    cp "$SCRIPT_DIR/scripts/generate-keybinds-wallpaper.sh" ~/.local/share/dwm/
+    chmod +x ~/.local/share/dwm/generate-keybinds-wallpaper.sh
+    print_success "Keybinds wallpaper generator installed"
+fi
+
 # ============================================
-# STEP 4: Configure .xinitrc
+# STEP 4: Configure .xinitrc with monitor profiles
 # ============================================
 echo ""
 print_status "Configuring .xinitrc..."
 
 XINITRC="$HOME/.xinitrc"
 
+# Copy monitor profile generator script
+if [[ -f "$SCRIPT_DIR/scripts/generate-monitor-profiles.sh" ]]; then
+    cp "$SCRIPT_DIR/scripts/generate-monitor-profiles.sh" ~/.local/share/dwm/
+    chmod +x ~/.local/share/dwm/generate-monitor-profiles.sh
+fi
+
 if [[ -f "$XINITRC" ]]; then
     if grep -q "exec dwm" "$XINITRC"; then
         print_success ".xinitrc already configured for dwm"
+        # Check if monitor profiles section exists
+        if ! grep -q "MONITOR CONFIGURATION" "$XINITRC"; then
+            print_warning "Adding monitor profile templates to existing .xinitrc..."
+            # Insert monitor profiles before exec dwm
+            TEMP_FILE=$(mktemp)
+            head -n -2 "$XINITRC" > "$TEMP_FILE"
+            cat >> "$TEMP_FILE" << 'MONITOREOF'
+
+# ============================================
+# MONITOR CONFIGURATION (xrandr)
+# Uncomment ONE profile below or customize for your setup
+# Run: ~/.local/share/dwm/generate-monitor-profiles.sh
+# to detect your monitors and generate new profiles
+# ============================================
+
+# --- Single Monitor Auto (recommended default) ---
+# xrandr --output HDMI-1 --auto --primary
+
+# --- Single Monitor 1080p 60Hz ---
+# xrandr --output HDMI-1 --mode 1920x1080 --rate 60 --primary
+
+# --- Single Monitor 1080p 144Hz ---
+# xrandr --output DP-1 --mode 1920x1080 --rate 144 --primary
+
+# --- Single Monitor 1440p 60Hz ---
+# xrandr --output DP-1 --mode 2560x1440 --rate 60 --primary
+
+# --- Single Monitor 1440p 144Hz ---
+# xrandr --output DP-1 --mode 2560x1440 --rate 144 --primary
+
+# --- Single Monitor 1440p 165Hz ---
+# xrandr --output DP-1 --mode 2560x1440 --rate 165 --primary
+
+# --- Single Monitor 4K 60Hz ---
+# xrandr --output DP-1 --mode 3840x2160 --rate 60 --primary
+
+# --- Single Monitor 4K 120Hz ---
+# xrandr --output DP-1 --mode 3840x2160 --rate 120 --primary
+
+# --- Dual Monitor (extend right) ---
+# xrandr --output DP-1 --mode 2560x1440 --rate 144 --primary \
+#        --output HDMI-1 --mode 1920x1080 --rate 60 --right-of DP-1
+
+# --- Dual Monitor (extend left) ---
+# xrandr --output DP-1 --mode 2560x1440 --rate 144 --primary \
+#        --output HDMI-1 --mode 1920x1080 --rate 60 --left-of DP-1
+
+# --- Dual Monitor (mirror/clone) ---
+# xrandr --output DP-1 --mode 1920x1080 --rate 60 --primary \
+#        --output HDMI-1 --mode 1920x1080 --rate 60 --same-as DP-1
+
+# --- Triple Monitor ---
+# xrandr --output DP-1 --mode 2560x1440 --rate 144 --primary \
+#        --output HDMI-1 --mode 1920x1080 --rate 60 --left-of DP-1 \
+#        --output DP-2 --mode 1920x1080 --rate 60 --right-of DP-1
+
+# ============================================
+
+MONITOREOF
+            tail -2 "$XINITRC" >> "$TEMP_FILE"
+            mv "$TEMP_FILE" "$XINITRC"
+            chmod +x "$XINITRC"
+            print_success "Monitor profiles added to .xinitrc"
+        fi
     else
         print_warning ".xinitrc exists but doesn't start dwm"
         read -p "Append 'exec dwm' to .xinitrc? [y/N] " -n 1 -r
@@ -319,11 +410,61 @@ if [ -d /etc/X11/xinit/xinitrc.d ]; then
     unset f
 fi
 
+# ============================================
+# MONITOR CONFIGURATION (xrandr)
+# Uncomment ONE profile below or customize for your setup
+# Run: ~/.local/share/dwm/generate-monitor-profiles.sh
+# to detect your monitors and generate new profiles
+# ============================================
+
+# --- Single Monitor Auto (recommended default) ---
+# xrandr --output HDMI-1 --auto --primary
+
+# --- Single Monitor 1080p 60Hz ---
+# xrandr --output HDMI-1 --mode 1920x1080 --rate 60 --primary
+
+# --- Single Monitor 1080p 144Hz ---
+# xrandr --output DP-1 --mode 1920x1080 --rate 144 --primary
+
+# --- Single Monitor 1440p 60Hz ---
+# xrandr --output DP-1 --mode 2560x1440 --rate 60 --primary
+
+# --- Single Monitor 1440p 144Hz ---
+# xrandr --output DP-1 --mode 2560x1440 --rate 144 --primary
+
+# --- Single Monitor 1440p 165Hz ---
+# xrandr --output DP-1 --mode 2560x1440 --rate 165 --primary
+
+# --- Single Monitor 4K 60Hz ---
+# xrandr --output DP-1 --mode 3840x2160 --rate 60 --primary
+
+# --- Single Monitor 4K 120Hz ---
+# xrandr --output DP-1 --mode 3840x2160 --rate 120 --primary
+
+# --- Dual Monitor (extend right) ---
+# xrandr --output DP-1 --mode 2560x1440 --rate 144 --primary \
+#        --output HDMI-1 --mode 1920x1080 --rate 60 --right-of DP-1
+
+# --- Dual Monitor (extend left) ---
+# xrandr --output DP-1 --mode 2560x1440 --rate 144 --primary \
+#        --output HDMI-1 --mode 1920x1080 --rate 60 --left-of DP-1
+
+# --- Dual Monitor (mirror/clone) ---
+# xrandr --output DP-1 --mode 1920x1080 --rate 60 --primary \
+#        --output HDMI-1 --mode 1920x1080 --rate 60 --same-as DP-1
+
+# --- Triple Monitor ---
+# xrandr --output DP-1 --mode 2560x1440 --rate 144 --primary \
+#        --output HDMI-1 --mode 1920x1080 --rate 60 --left-of DP-1 \
+#        --output DP-2 --mode 1920x1080 --rate 60 --right-of DP-1
+
+# ============================================
+
 # Start dwm
 exec dwm
 EOF
     chmod +x "$XINITRC"
-    print_success ".xinitrc created"
+    print_success ".xinitrc created with monitor profiles"
 fi
 
 # ============================================
@@ -359,10 +500,19 @@ echo "  1. Log out of any desktop environment"
 echo "  2. Switch to a TTY (Ctrl+Alt+F2)"
 echo "  3. Log in and run: startx"
 echo ""
-echo "Key bindings:"
+echo "Key bindings (see wallpaper for full list):"
 echo "  Mod+Return     Open terminal"
 echo "  Mod+p          Open dmenu"
 echo "  Mod+Shift+c    Close window"
 echo "  Mod+Shift+q    Quit dwm"
+echo ""
+echo "Monitor configuration:"
+echo "  Edit ~/.xinitrc and uncomment your monitor profile"
+echo "  Run: ~/.local/share/dwm/generate-monitor-profiles.sh"
+echo "  to detect monitors and generate custom profiles"
+echo ""
+echo "Wallpapers:"
+echo "  Keybinds: ~/.local/share/wallpapers/keybinds.png"
+echo "  Regenerate: ~/.local/share/dwm/generate-keybinds-wallpaper.sh"
 echo ""
 print_success "Enjoy your new desktop!"
