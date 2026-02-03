@@ -19,7 +19,7 @@ static int instant = 0;                     /* -n  option; if 1, selects matchin
 #endif // INSTANT_PATCH
 #if CENTER_PATCH
 static int center = 1;                      /* -c  option; if 0, dmenu won't be centered on the screen */
-static int min_width = 600;                 /* minimum width when centered */
+static int min_width = 500;                 /* minimum width when centered */
 #endif // CENTER_PATCH
 #if BARPADDING_PATCH
 static const int vertpad = 12;              /* vertical padding of bar */
@@ -110,11 +110,11 @@ char *colors[][2] = {
 	[SchemeMid]  = { "#eeeeee", "#770000" },
 	#endif // MORECOLOR_PATCH
 	#if HIGHLIGHT_PATCH
-	[SchemeSelHighlight]  = { "#ffc978", "#005577" },
-	[SchemeNormHighlight] = { "#ffc978", "#222222" },
+	[SchemeSelHighlight]  = { "#ff9e64", "#7aa2f7" },
+	[SchemeNormHighlight] = { "#ff9e64", "#1a1b26" },
 	#endif // HIGHLIGHT_PATCH
 	#if HIGHPRIORITY_PATCH
-	[SchemeHp]   = { "#bbbbbb", "#333333" },
+	[SchemeHp]   = { "#9ece6a", "#1a1b26" },
 	#endif // HIGHPRIORITY_PATCH
 	#if EMOJI_HIGHLIGHT_PATCH
 	[SchemeHover]  = { "#ffffff", "#353D4B" },
@@ -132,14 +132,14 @@ char *colors[][2] = {
 	#endif // CARET_SCHEME_PATCH
 };
 /* -l option; if nonzero, dmenu uses vertical list with given number of lines */
-static unsigned int lines      = 0;
+static unsigned int lines      = 15;
 #if GRID_PATCH
 /* -g option; if nonzero, dmenu uses a grid comprised of columns and lines */
 static unsigned int columns    = 0;
 #endif // GRID_PATCH
 #if LINE_HEIGHT_PATCH
-static unsigned int lineheight = 36;        /* -h option; minimum height of a menu line     */
-static unsigned int min_lineheight = 28;
+static unsigned int lineheight = 32;        /* -h option; minimum height of a menu line     */
+static unsigned int min_lineheight = 24;
 #endif // LINE_HEIGHT_PATCH
 #if NAVHISTORY_PATCH
 static unsigned int maxhist    = 15;
@@ -171,7 +171,7 @@ static Key quit_keys[] = {
 
 #if BORDER_PATCH
 /* Size of the window border */
-static unsigned int border_width = 2;
+static unsigned int border_width = 3;
 #endif // BORDER_PATCH
 
 #if PREFIXCOMPLETION_PATCH

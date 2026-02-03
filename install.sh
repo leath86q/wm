@@ -120,6 +120,38 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     fi
 fi
 
+# Optional: Ask about LibreWolf (minimal privacy-focused Firefox fork)
+echo ""
+print_status "LibreWolf is a minimal, privacy-focused Firefox fork (no telemetry, clean UI)"
+read -p "Install LibreWolf browser? [y/N] " -n 1 -r
+echo ""
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    if ! pacman -Qi librewolf &>/dev/null; then
+        # LibreWolf is in the AUR, check for yay/paru
+        if command -v yay &>/dev/null; then
+            yay -S --needed --noconfirm librewolf-bin
+            print_success "LibreWolf installed via yay"
+        elif command -v paru &>/dev/null; then
+            paru -S --needed --noconfirm librewolf-bin
+            print_success "LibreWolf installed via paru"
+        else
+            print_warning "LibreWolf requires an AUR helper (yay or paru)"
+            read -p "Install yay first? [y/N] " -n 1 -r
+            echo ""
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                print_status "Installing yay..."
+                git clone https://aur.archlinux.org/yay-bin.git /tmp/yay-bin
+                (cd /tmp/yay-bin && makepkg -si --noconfirm)
+                rm -rf /tmp/yay-bin
+                yay -S --needed --noconfirm librewolf-bin
+                print_success "LibreWolf installed"
+            fi
+        fi
+    else
+        print_success "LibreWolf already installed"
+    fi
+fi
+
 # ============================================
 # STEP 1.5: Download default wallpaper
 # ============================================
@@ -175,9 +207,16 @@ build_component() {
         return 1
     fi
     
-    # Install with sudo
-    if ! sudo make install >> "$logfile" 2>&1; then
-        print_error "Failed to install $name"
+    # Install with sudo (may fail on man pages, so we verify binary instead)
+    sudo make install >> "$logfile" 2>&1 || true
+    
+    # Verify the binary was actually installed
+    if [[ -x "/usr/local/bin/$name" ]]; then
+        print_success "$name installed successfully"
+        rm -f "$logfile"
+        return 0
+    else
+        print_error "Failed to install $name - binary not found"
         echo ""
         echo "--- Build log ($logfile) ---"
         tail -30 "$logfile"
@@ -185,10 +224,6 @@ build_component() {
         echo ""
         return 1
     fi
-    
-    print_success "$name installed successfully"
-    rm -f "$logfile"
-    return 0
 }
 
 # Track build results

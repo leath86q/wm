@@ -116,12 +116,12 @@
  * 
  * 
  */
-#define HIGHLIGHT_PATCH 0
+#define HIGHLIGHT_PATCH 1
 
 /* This will automatically sort the search result so that high priority items are shown first.
  * 
  */
-#define HIGHPRIORITY_PATCH 0
+#define HIGHPRIORITY_PATCH 1
 
 /* This patch causes dmenu to print out the current text each time a key is pressed.
  * 
