@@ -154,7 +154,125 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
 fi
 
 # ============================================
-# STEP 1.5: Setup wallpaper
+# STEP 1.5: Gaming Setup (AMD 7800XT)
+# ============================================
+echo ""
+print_status "Gaming Setup for AMD GPU (7800XT / RDNA3)"
+echo "  This includes: AMD drivers, Vulkan, Steam, Proton tools, and performance utilities"
+read -p "Install gaming utilities? [y/N] " -n 1 -r
+echo ""
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    # Enable multilib if not already (required for 32-bit packages)
+    if ! grep -q "^\[multilib\]" /etc/pacman.conf; then
+        print_status "Enabling multilib repository..."
+        sudo sed -i '/^#\[multilib\]/,/^#Include/ s/^#//' /etc/pacman.conf
+        sudo pacman -Sy
+        print_success "Multilib repository enabled"
+    fi
+
+    # AMD GPU Drivers and Vulkan
+    GAMING_PACKAGES=(
+        # Mesa/OpenGL
+        "mesa"
+        "lib32-mesa"
+        # Vulkan (essential for Proton)
+        "vulkan-radeon"
+        "lib32-vulkan-radeon"
+        "vulkan-icd-loader"
+        "lib32-vulkan-icd-loader"
+        # Xorg driver
+        "xf86-video-amdgpu"
+        # Video acceleration
+        "libva-mesa-driver"
+        "lib32-libva-mesa-driver"
+        "mesa-vdpau"
+        "lib32-mesa-vdpau"
+        # Steam
+        "steam"
+        # Performance tools
+        "gamemode"
+        "lib32-gamemode"
+        "mangohud"
+        "lib32-mangohud"
+        "gamescope"
+        # MangoHud GUI config
+        "goverlay"
+    )
+
+    MISSING_GAMING=()
+    for pkg in "${GAMING_PACKAGES[@]}"; do
+        if ! pacman -Qi "$pkg" &>/dev/null; then
+            MISSING_GAMING+=("$pkg")
+        fi
+    done
+
+    if [[ ${#MISSING_GAMING[@]} -gt 0 ]]; then
+        print_status "Installing gaming packages: ${MISSING_GAMING[*]}"
+        if ! sudo pacman -S --needed --noconfirm "${MISSING_GAMING[@]}"; then
+            print_warning "Some gaming packages failed to install (may need manual intervention)"
+        else
+            print_success "Gaming packages installed"
+        fi
+    else
+        print_success "All gaming packages already installed"
+    fi
+
+    # AUR packages: protonup-qt, corectrl
+    AUR_GAMING=("protonup-qt" "corectrl")
+    
+    echo ""
+    print_status "AUR gaming packages: protonup-qt (GE-Proton manager), corectrl (GPU control panel)"
+    read -p "Install AUR gaming packages? [y/N] " -n 1 -r
+    echo ""
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        # Ensure AUR helper exists
+        AUR_HELPER=""
+        if command -v yay &>/dev/null; then
+            AUR_HELPER="yay"
+        elif command -v paru &>/dev/null; then
+            AUR_HELPER="paru"
+        else
+            print_warning "No AUR helper found. Installing yay..."
+            git clone https://aur.archlinux.org/yay-bin.git /tmp/yay-bin
+            (cd /tmp/yay-bin && makepkg -si --noconfirm)
+            rm -rf /tmp/yay-bin
+            AUR_HELPER="yay"
+        fi
+
+        for aur_pkg in "${AUR_GAMING[@]}"; do
+            if ! pacman -Qi "$aur_pkg" &>/dev/null; then
+                print_status "Installing $aur_pkg from AUR..."
+                $AUR_HELPER -S --needed --noconfirm "$aur_pkg" || print_warning "Failed to install $aur_pkg"
+            else
+                print_success "$aur_pkg already installed"
+            fi
+        done
+        print_success "AUR gaming packages installed"
+    fi
+
+    # Post-install tips
+    echo ""
+    print_success "Gaming setup complete!"
+    echo ""
+    echo "  ┌─────────────────────────────────────────────────────────────┐"
+    echo "  │ Gaming Tips:                                                │"
+    echo "  │                                                             │"
+    echo "  │ • Run 'protonup-qt' to download GE-Proton versions         │"
+    echo "  │ • Steam > Settings > Compatibility > Enable Steam Play     │"
+    echo "  │ • Select 'GE-Proton' as default compatibility tool         │"
+    echo "  │                                                             │"
+    echo "  │ • MangoHud: Add 'mangohud %command%' to game launch opts   │"
+    echo "  │ • Gamescope: 'gamescope -W 2560 -H 1440 -f -- %command%'   │"
+    echo "  │ • GameMode: 'gamemoderun %command%' (auto for Steam)       │"
+    echo "  │                                                             │"
+    echo "  │ • CoreCtrl: Control GPU clocks/fans (add to autostart)     │"
+    echo "  │ • GOverlay: GUI to configure MangoHud overlay              │"
+    echo "  └─────────────────────────────────────────────────────────────┘"
+    echo ""
+fi
+
+# ============================================
+# STEP 1.6: Setup wallpaper
 # ============================================
 echo ""
 print_status "Setting up wallpaper..."
